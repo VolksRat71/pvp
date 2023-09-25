@@ -3,10 +3,20 @@ from flask_cors import CORS  # Importing CORS
 import asyncio
 from bleak import BleakScanner
 from bleak import BleakClient
+from flask_sse import sse
 
 app = Flask(__name__)
 CORS(app)  # Applying CORS to the Flask app to allow requests from any origin
 
+
+app.config["REDIS_URL"] = "redis://localhost"
+app.register_blueprint(sse, url_prefix='/stream')
+
+@app.route('/get_data_stream')
+def get_data_stream():
+    while True:
+        data_from_ble_device = get_data_from_ble_device()  # Replace this with your data fetching logic
+        sse.publish({"message": data_from_ble_device}, type='dataUpdate')
 
 @app.route('/connect/<address>', methods=['GET'])
 def connect_device(address):
