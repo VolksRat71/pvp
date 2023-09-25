@@ -2,9 +2,25 @@ from flask import Flask, jsonify
 from flask_cors import CORS  # Importing CORS
 import asyncio
 from bleak import BleakScanner
+from bleak import BleakClient
 
 app = Flask(__name__)
 CORS(app)  # Applying CORS to the Flask app to allow requests from any origin
+
+
+@app.route('/connect/<address>', methods=['GET'])
+def connect_device(address):
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    result = loop.run_until_complete(connect_device_async(address))
+    return jsonify(result)
+
+async def connect_device_async(address):
+    async with BleakClient(address) as client:
+        if client.is_connected:
+            return {"status": "success", "message": f"Connected to device {address}"}
+        else:
+            return {"status": "error", "message": f"Failed to connect to device {address}"}
 
 @app.route('/discover_all', methods=['GET'])
 def discover_all():

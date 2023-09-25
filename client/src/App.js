@@ -20,7 +20,21 @@ function App() {
   };
 
   const connectToDevice = (address) => {
-    console.log("Connecting to device:", address);
+    fetch(`http://127.0.0.1:5000/connect/${address}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === "success") {
+          console.log(data.message);
+          alert(data.message);
+        } else {
+          console.error(data.message);
+          alert(data.message);
+        }
+      })
+      .catch(error => {
+        console.error("Error connecting to device:", error);
+        alert("Error connecting to device. Please check the console for more details.");
+      });
   };
 
   useEffect(() => {
