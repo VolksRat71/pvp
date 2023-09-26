@@ -135,7 +135,7 @@ function App() {
           </Box>
         </Collapse>
         <Collapse in={!isLoading}>
-          <Table>
+          <Table size="medium">
             <TableHead>
               <TableRow>
                 <TableCell>Address</TableCell>
@@ -157,7 +157,7 @@ function App() {
                       disabled={device.isConnected}
                       onClick={() => connectToDevice(device.Address, i)}
                     >
-                      {device.isConnected ? "Connected" : "  Connect  "}
+                      {device.isConnected ? "Connected" : "Connect"}
                     </LoadingButton>
                   </TableCell>
                 </TableRow>
