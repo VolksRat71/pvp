@@ -1,32 +1,41 @@
-class BleManager {
-    start() {
-        console.log("Starting BLE manager...");
-    }
-
-    stop() {
-        console.log("Stopping BLE manager...");
-    }
-
-    // Mocked for demonstration
-    async searchForDevices() {
-        return [
-            { address: '192.168.1.1', name: 'Device 1' },
-            { address: '192.168.1.2', name: 'Device 2' },
-            // ... More dummy devices
-        ];
-    }
-}
+import { BleManager } from 'react-native-ble-plx';
 
 const manager = new BleManager();
 
 export const initializeManager = () => {
-    manager.start();
+    // No specific initialization needed for this library.
+    // However, you can add any setup code here if required.
 }
 
 export const finalizeManager = () => {
-    manager.stop();
+    // Cleanup logic if needed
+    // This can involve removing listeners or other resources.
 }
 
-export const searchDevices = async () => {
-    return await manager.searchForDevices();
+export const searchDevices = () => {
+    return new Promise((resolve, reject) => {
+        const devicesFound = [];
+
+        // Start scanning
+        manager.startDeviceScan(null, null, (error, device) => {
+            if (error) {
+                // Handle error
+                console.error(error);
+                reject(error);
+                return;
+            }
+
+            // Check for the device you are interested in
+            // For this example, we're simply adding the device to our array
+            devicesFound.push(device);
+        });
+
+        // Stop scanning after 10 seconds and resolve the promise
+        setTimeout(() => {
+            manager.stopDeviceScan();
+            resolve(devicesFound);
+        }, 10000);
+    });
 }
+
+// ... Other BLE related functions

@@ -1,7 +1,7 @@
 // ./views/DeviceConnection.js
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ScrollView, Animated } from 'react-native';
+import { ScrollView, Animated, Button } from 'react-native';
 import { DataTable } from 'react-native-paper';
 import SearchForDevices from '../components/SearchForDevices';
 import { searchDevices } from '../utils/bleManager';
@@ -59,6 +59,11 @@ const DeviceConnection = () => {
                         <DataTable.Row key={index}>
                             <DataTable.Cell>{device.address}</DataTable.Cell>
                             <DataTable.Cell>{device.name}</DataTable.Cell>
+                            {/* <DataTable.Cell>
+                                <Button mode="contained" onPress={() => null}>
+                                    Connect
+                                </Button>
+                            </DataTable.Cell> */}
                         </DataTable.Row>
                     ))}
                 </DataTable>
