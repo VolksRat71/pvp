@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView } from 'react-native';
 import { NativeRouter, Route, Link, Routes } from 'react-router-native';
 import { Provider as PaperProvider, Appbar, Button, Drawer } from 'react-native-paper';
@@ -7,10 +7,21 @@ import DarkTheme from './theme/DarkTheme';
 import Landing from './views/Landing.js'
 import Profile from './views/Profile.js'
 import Settings from './views/Settings.js'
+import { AppLoading } from 'expo';
+import * as Font from 'expo-font';
 
 export default function App() {
     const [drawerOpen, setDrawerOpen] = React.useState(false);
     const [active, setActive] = React.useState('');
+    const [isFontLoaded, setFontLoaded] = useState(false);
+
+    const loadFonts = async () => {
+        await Font.loadAsync({
+            'PokemonClassic': require('./assets/Pokemon_Classic.ttf'),
+        });
+    };
+
+    useEffect(() => { loadFonts().then(() => setFontLoaded(true)) }, []);
 
     return (
         <PaperProvider theme={DarkTheme}>
