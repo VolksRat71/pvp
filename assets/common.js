@@ -68,6 +68,7 @@ class HeartRateScorer {
 
         // Check for overrides in local storage
         const overrides = JSON.parse(localStorage.getItem(this.difficulty) || '{}');
+
         return { ...defaultSettings[this.difficulty], ...overrides };
     }
 

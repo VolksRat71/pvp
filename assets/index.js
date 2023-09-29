@@ -46,6 +46,9 @@ function updateRangeHint() {
 
 
     const scorer = new HeartRateScorer(age, goalHeartRateStart, difficulty); // Using goalStart for this instance
+    const difficultySettings = scorer.getDifficultySettings();
+
+    console.log(difficultySettings)
 
     // Set placeholders for the recommended heart rate range
     const {start, end} = scorer.getRecommendedHeartRateRange(age);
@@ -53,14 +56,11 @@ function updateRangeHint() {
     document.getElementById('goalHeartRateStart').placeholder = start.toFixed(0);
     document.getElementById('goalHeartRateEnd').placeholder = end.toFixed(0);
 
-    // Calculate and display the actual target range based on the difficulty and entered goal start
-    const targetRange = scorer.calculateTargetRange();
-
-    document.getElementById('rangeHint').textContent = `(${targetRange.start.toFixed(2)} to ${targetRange.end.toFixed(2)})`;
+    document.getElementById('rangeHint').textContent = `(Top Score Width: ${difficultySettings.width} | Max Score: ${difficultySettings.maxScore})`;
 
     // Display the difficulty hint
-    const lowerBoundPercentage = (1 - currentSettings[difficulty].lowerBound) * 100;
-    const upperBoundPercentage = (currentSettings[difficulty].upperBound - 1) * 100;
+    const lowerBoundPercentage = (1 - difficultySettings.lowerBoundPercentage) * 100;
+    const upperBoundPercentage = (difficultySettings.upperBoundPercentage - 1) * 100;
     const difficultyHint = `${lowerBoundPercentage.toFixed(2)}% under to ${upperBoundPercentage.toFixed(2)}% over`;
     document.getElementById('difficultyHint').textContent = difficultyHint;
 }
