@@ -25,75 +25,42 @@
                     </select>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Default Values</label>
-                    <div class="mb-2">Lower Bound: <span id="defaultLowerBound"></span>% under</div>
-                    <div class="mb-2">Upper Bound: <span id="defaultUpperBound"></span>% over</div>
-                    <div class="mb-2">Multiplier: <span id="defaultMultiplier"></span>% of score</div>
-                </div>
-                <div class="mb-3">
-                    <label for="overrideLowerBound" class="form-label">Override Lower Bound (% under)</label>
+                    <label for="overrideLowerBound" class="form-label">Lower Bound (% under)</label>
                     <input type="number" class="form-control" id="overrideLowerBound">
                 </div>
                 <div class="mb-3">
-                    <label for="overrideUpperBound" class="form-label">Override Upper Bound (% over)</label>
+                    <label for="overrideUpperBound" class="form-label">Upper Bound (% over)</label>
                     <input type="number" class="form-control" id="overrideUpperBound">
                 </div>
                 <div class="mb-3">
-                    <label for="overrideMultiplier" class="form-label">Override Multiplier (% of score)</label>
+                    <label for="overrideMultiplier" class="form-label">Multiplier (% of score)</label>
                     <input type="number" step="0.01" class="form-control" id="overrideMultiplier">
                 </div>
                 <button type="button" class="btn btn-primary" onclick="saveOverrides()">Save Overrides</button>
             </form>
             <div class="mt-4">
                 <h4>Past Configurations</h4>
-                <table class="table table-dark">
-                    <thead>
-                        <tr>
-                            <th>Difficulty</th>
-                            <th>Lower Bound (% under)</th>
-                            <th>Upper Bound (% over)</th>
-                            <th>Multiplier (% of score)</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="configurationsTable"></tbody>
-                </table>
-                <button type="button" class="btn btn-primary" onclick="window.location.replace('./index.html')">Back to Scorer</button>
+                <div class="table-responsive">
+                    <table class="table table-dark">
+                        <thead>
+                            <tr>
+                                <th>Difficulty</th>
+                                <th>Lower Bound (% under)</th>
+                                <th>Upper Bound (% over)</th>
+                                <th>Multiplier (% of score)</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="configurationsTable"></tbody>
+                    </table>
+                </div>
+                <button type="button" class="btn btn-primary" onclick="window.location.replace('./index.html')">Back to Landing</button>
             </div>
         </div>
     </div>
 
-    <script src="assets/index.js"></script>
-    <script>
-        // ... (Existing HeartRateScorerSettings class and functions)
-
-        function displayConfigurations() {
-            const configurations = JSON.parse(localStorage.getItem('configurations') || '[]');
-            const table = document.getElementById('configurationsTable');
-            table.innerHTML = '';
-            configurations.forEach((config, index) => {
-                const row = table.insertRow();
-                row.insertCell(0).innerHTML = config.difficulty;
-                row.insertCell(1).innerHTML = (1 - config.lowerBound) * 100;
-                row.insertCell(2).innerHTML = (config.upperBound - 1) * 100;
-                row.insertCell(3).innerHTML = (config.multiplier - 1) * 100;
-                row.insertCell(4).innerHTML = `<button onclick="deleteConfiguration(${index})">Delete</button>`;
-            });
-        }
-
-        function deleteConfiguration(index) {
-            const configurations = JSON.parse(localStorage.getItem('configurations') || '[]');
-            configurations.splice(index, 1);
-            localStorage.setItem('configurations', JSON.stringify(configurations));
-            displayConfigurations();
-        }
-
-        // On page load, display the default values and past configurations
-        window.onload = function() {
-            displayDefaults();
-            displayConfigurations();
-        };
-    </script>
+    <script src="assets/common.js"></script>
+    <script src="assets/settings.js"></script>
 </body>
 
 </html>

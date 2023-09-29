@@ -16,11 +16,11 @@
             <form id="scorerForm">
                 <div class="mb-3">
                     <label for="goal" class="form-label">Goal Heart Rate</label>
-                    <input type="number" class="form-control" id="goal">
+                    <input id="goalHeartRate" type="number" class="form-control" id="goal">
                 </div>
                 <div class="mb-3">
                     <label for="average" class="form-label">Average Heart Rate</label>
-                    <input type="number" class="form-control" id="average">
+                    <input id="averageHeartRate" type="number" class="form-control" id="average">
                 </div>
                 <div class="mb-3">
                     <label for="difficulty" class="form-label">Difficulty</label>
@@ -34,150 +34,39 @@
             </form>
             <div class="mt-4" id="result"></div>
             <div class="mt-4">
-                <table class="table table-dark">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Goal</th>
-                            <th>Average</th>
-                            <th>Score</th>
-                            <th>Multiplier</th>
-                            <th>Difficulty</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="entriesTable"></tbody>
-                    <tfoot>
-                        <tr>
-                            <td colspan="6">Total Score:</td>
-                            <td id="totalScore">0</td>
-                        </tr>
-                    </tfoot>
-                </table>
+                <div class="table-responsive">
+                    <table class="table table-dark">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Goal</th>
+                                <th>Average</th>
+                                <th>Score</th>
+                                <th>Multiplier</th>
+                                <th>Difficulty</th>
+                                <th>Lower Bound</th>
+                                <th>Upper Bound</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="entriesTable"></tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="8">Total Score:</td>
+                                <td id="totalScore">0</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+
                 <button type="button" class="btn btn-primary" onclick="window.location.replace('./settings.html')">Update Settings</button>
             </div>
         </div>
     </div>
 
-    <script>
-        class HeartRateScorer {
-            constructor(goalHeartRate, difficulty = 'medium') {
-                this.goalHeartRate = goalHeartRate;
-                this.difficulty = difficulty;
-                this.multiplier = this.getMultiplier();
-            }
-
-            getMultiplier() {
-                switch (this.difficulty) {
-                    case 'hard':
-                        return 1.05;
-                    case 'medium':
-                        return 1.025;
-                    case 'easy':
-                    default:
-                        return 1;
-                }
-            }
-
-            baseScore(averageHeartRate) {
-                const a = 100;  // Base maximum score
-                let lowerBound, upperBound, c;
-
-                switch (this.difficulty) {
-                    case 'easy':
-                        lowerBound = this.goalHeartRate * 0.50;
-                        upperBound = this.goalHeartRate * 1.35;
-                        c = (upperBound - this.goalHeartRate) / 3;
-                        break;
-                    case 'medium':
-                        lowerBound = this.goalHeartRate * 0.65;
-                        upperBound = this.goalHeartRate * 1.15;
-                        c = (upperBound - this.goalHeartRate) / 3;
-                        break;
-                    case 'hard':
-                        lowerBound = this.goalHeartRate * 0.50;
-                        upperBound = this.goalHeartRate * 1.10;
-                        c = (upperBound - this.goalHeartRate) / 3;
-                        break;
-                    default:
-                        throw new Error('Invalid difficulty level');
-                }
-
-                if (averageHeartRate < lowerBound || averageHeartRate > upperBound) {
-                    return 0;
-                }
-
-                return a * Math.exp(-Math.pow(averageHeartRate - this.goalHeartRate, 2) / (2 * Math.pow(c, 2)));
-            }
-
-            finalScore(averageHeartRate) {
-                return Math.round(this.baseScore(averageHeartRate) * this.multiplier);
-            }
-        }
-
-        function calculateFinalScore() {
-            const goal = parseFloat(document.getElementById('goal').value);
-            const average = parseFloat(document.getElementById('average').value);
-            const difficulty = document.getElementById('difficulty').value;
-            const scorer = new HeartRateScorer(goal, difficulty);
-            const score = scorer.finalScore(average);
-            document.getElementById('result').innerHTML = `<strong>Final Score:</strong> ${score}`;
-
-            // Save to local storage
-            const entries = JSON.parse(localStorage.getItem('entries') || '[]');
-            entries.push({
-                date: new Date().toLocaleString(),
-                goal: goal,
-                average: average,
-                score: score,
-                multiplier: scorer.multiplier,
-                difficulty: difficulty
-            });
-            localStorage.setItem('entries', JSON.stringify(entries));
-
-            // Update the displayed entries
-            displayEntries();
-        }
-
-        function displayEntries() {
-            const entries = JSON.parse(localStorage.getItem('entries') || '[]');
-            const table = document.getElementById('entriesTable');
-            table.innerHTML = '';
-            let totalScore = 0;
-            entries.forEach((entry, index) => {
-                totalScore += entry.score;
-                const row = table.insertRow();
-                row.insertCell(0).innerHTML = entry.date;
-                row.insertCell(1).innerHTML = entry.goal;
-                row.insertCell(2).innerHTML = entry.average;
-                row.insertCell(3).innerHTML = entry.score;
-                row.insertCell(4).innerHTML = entry.multiplier;
-                row.insertCell(5).innerHTML = entry.difficulty;
-                row.insertCell(6).innerHTML = `<button onclick="deleteEntry(${index})">Delete</button>`;
-            });
-            document.getElementById('totalScore').innerText = totalScore;
-        }
-
-        function deleteEntry(index) {
-            const entries = JSON.parse(localStorage.getItem('entries') || '[]');
-            entries.splice(index, 1);
-            localStorage.setItem('entries', JSON.stringify(entries));
-            displayEntries();
-        }
-
-        // On page load, set form defaults from local storage and display entries
-        window.onload = function () {
-            const savedGoal = localStorage.getItem('goal');
-            const savedDifficulty = localStorage.getItem('difficulty');
-            if (savedGoal) {
-                document.getElementById('goal').value = savedGoal;
-            }
-            if (savedDifficulty) {
-                document.getElementById('difficulty').value = savedDifficulty;
-            }
-            displayEntries();
-        };
-    </script>
+    <script src="assets/common.js"></script>
+    <script src="assets/index.js"></script>
 </body>
 
 </html>
