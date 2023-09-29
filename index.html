@@ -7,7 +7,8 @@
     <title>Heart Rate Scorer</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="assets/style.css"></head>
+    <link rel="stylesheet" href="assets/style.css">
+</head>
 
 <body>
     <div class="container mt-5">
@@ -15,22 +16,32 @@
             <h2 class="mb-4">Heart Rate Scorer</h2>
             <form id="scorerForm">
                 <div class="mb-3">
-                    <label for="goal" class="form-label">Goal Heart Rate</label>
-                    <input id="goalHeartRate" type="number" class="form-control" id="goal">
+                    <label for="age" class="form-label">Age</label>
+                    <input id="age" type="number" class="form-control" placeholder="25" oninput="updateRangeHint(); checkFormCompletion();">
+                </div>
+                <div class="mb-3">
+                    <label for="goalStart" class="form-label">Goal Heart Rate Range Start</label>
+                    <input id="goalHeartRateStart" type="number" class="form-control" oninput="checkFormCompletion()">
+                </div>
+                <div class="mb-3">
+                    <label for="goalEnd" class="form-label">Goal Heart Rate Range End</label>
+                    <input id="goalHeartRateEnd" type="number" class="form-control" oninput="checkFormCompletion()">
                 </div>
                 <div class="mb-3">
                     <label for="average" class="form-label">Average Heart Rate</label>
-                    <input id="averageHeartRate" type="number" class="form-control" id="average">
+                    <input id="averageHeartRate" type="number" class="form-control" oninput="checkFormCompletion()">
                 </div>
+                <!-- ... (Other fields like age, gender, height, weight) ... -->
                 <div class="mb-3">
-                    <label for="difficulty" class="form-label">Difficulty</label>
-                    <select class="form-control" id="difficulty">
+                    <label for="difficulty" class="form-label">Difficulty <span id="rangeHint">(Range hint will appear here)</span></label>
+                    <select class="form-control" id="difficulty" onchange="updateRangeHint()">
                         <option value="easy">Easy</option>
                         <option value="medium">Medium</option>
                         <option value="hard">Hard</option>
                     </select>
+                    <small id="difficultyHint" class="form-text text-muted"></small>
                 </div>
-                <button type="button" class="btn btn-primary" onclick="calculateFinalScore()">Calculate Score</button>
+                <button id="calculateButton" type="button" class="btn btn-primary" onclick="calculateFinalScore()">Calculate Score</button>
             </form>
             <div class="mt-4" id="result"></div>
             <div class="mt-4">
@@ -42,7 +53,6 @@
                                 <th>Goal</th>
                                 <th>Average</th>
                                 <th>Score</th>
-                                <th>Multiplier</th>
                                 <th>Difficulty</th>
                                 <th>Lower Bound</th>
                                 <th>Upper Bound</th>
@@ -52,14 +62,12 @@
                         <tbody id="entriesTable"></tbody>
                         <tfoot>
                             <tr>
-                                <td colspan="8">Total Score:</td>
+                                <td colspan="7">Total Score:</td>
                                 <td id="totalScore">0</td>
                             </tr>
                         </tfoot>
                     </table>
                 </div>
-
-
                 <button type="button" class="btn btn-primary" onclick="window.location.replace('./settings.html')">Update Settings</button>
             </div>
         </div>

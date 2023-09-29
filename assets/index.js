@@ -1,34 +1,57 @@
+// Constants and Global Variables
+const entries = JSON.parse(localStorage.getItem('entries') || '[]');
+let currentSettings = {
+    easy: { lowerBound: 0.5, upperBound: 1.35, maxScore: 90 },
+    medium: { lowerBound: 0.65, upperBound: 1.15, maxScore: 95 },
+    hard: { lowerBound: 0.85, upperBound: 1.1, maxScore: 100 }
+};
 
-function calculateScore(goal, average, difficulty) {
-    // Check for overrides in local storage
-    const overrides = JSON.parse(localStorage.getItem(difficulty) || '{}');
-    const scorer = new HeartRateScorer(goal, difficulty, overrides);
-    return scorer.finalScore(average);
+// Event Listeners
+document.getElementById('difficulty').addEventListener('change', updateRangeHint);
+document.getElementById('age').addEventListener('change', updateRangeHint);
+document.getElementById('scorerForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    calculateFinalScore();
+});
+
+// Functions
+function updateRangeHint() {
+    const difficulty = document.getElementById('difficulty').value;
+    const age = parseFloat(document.getElementById('age').value) || 25;  // Default age if not provided
+    const scorer = new HeartRateScorer(0, difficulty, age);  // Dummy goal for this instance
+
+    // Set placeholders for the goal range
+    const recommendedRange = scorer.getRecommendedHeartRateRange(age);
+    document.getElementById('goalHeartRateStart').placeholder = recommendedRange[0].toFixed(0);
+    document.getElementById('goalHeartRateEnd').placeholder = recommendedRange[1].toFixed(0);
+
+    // Display difficulty hint
+    const lowerBoundPercentage = (1 - currentSettings[difficulty].lowerBound) * 100;
+    const upperBoundPercentage = (currentSettings[difficulty].upperBound - 1) * 100;
+    const hint = `${lowerBoundPercentage.toFixed(2)}% under to ${upperBoundPercentage.toFixed(2)}% over`;
+    document.getElementById('difficultyHint').textContent = hint;
 }
 
-function calculateFinalScore() {
-    const entries = JSON.parse(localStorage.getItem('entries') || '[]');
-    const goal = parseFloat(document.getElementById('goalHeartRate').value);
-    const average = parseFloat(document.getElementById('averageHeartRate').value);
-    const difficulty = document.getElementById('difficulty').value;
-    const score = calculateScore(goal, average, difficulty);
-    const scorer = new HeartRateScorer(goal, difficulty);
-    const lowerBoundPercentage = (1 - scorer.lowerBound) * 100;
-    const upperBoundPercentage = (scorer.upperBound - 1) * 100;
 
+function calculateFinalScore() {
+    const difficulty = document.getElementById('difficulty').value;
+    const age = parseFloat(document.getElementById('age').value) || 25;
+    const goalStart = parseFloat(document.getElementById('goalHeartRateStart').value);
+    const average = parseFloat(document.getElementById('averageHeartRate').value);
+
+    const scorer = new HeartRateScorer(goalStart, difficulty, age);
+    const score = scorer.finalScore(average)
+
+    // Update and store the entries
     entries.push({
         date: new Date().toLocaleString(),
-        goal: goal,
+        goal: `${goalStart} - ${goalEnd}`,
         average: average,
         score: score,
-        multiplier: scorer.multiplier,
-        difficulty: difficulty,
-        lowerBound: lowerBoundPercentage.toFixed(2) + '%',
-        upperBound: upperBoundPercentage.toFixed(2) + '%'
+        difficulty: difficulty
     });
     localStorage.setItem('entries', JSON.stringify(entries));
 
-    // Update the displayed entries
     displayEntries();
 }
 
@@ -43,7 +66,7 @@ function displayEntries() {
         // Create an instance of HeartRateScorerSettings to get the bounds
         const settings = new HeartRateScorerSettings(entry.difficulty);
         const defaults = settings.getDefaults();
-        const scorer = new HeartRateScorer(entry.goal, entry.difficulty);
+        const scorer = new HeartRateScorer(entry.goal, entry.difficulty, );
         const lowerBoundPercentage = (1 - scorer.lowerBound) * 100; // Convert to percentage under
         const upperBoundPercentage = (scorer.upperBound - 1) * 100; // Convert to percentage over
 
@@ -61,34 +84,13 @@ function displayEntries() {
     document.getElementById('totalScore').innerText = totalScore;
 }
 
-
 function deleteEntry(index) {
     const entries = JSON.parse(localStorage.getItem('entries') || '[]');
     entries.splice(index, 1);
-    const scorer = new HeartRateScorer(goal, difficulty);
-    const lowerBoundPercentage = (1 - scorer.lowerBound) * 100;
-    const upperBoundPercentage = (scorer.upperBound - 1) * 100;
-
-    entries.push({
-        date: new Date().toLocaleString(),
-        goal: goal,
-        average: average,
-        score: score,
-        multiplier: scorer.multiplier,
-        difficulty: difficulty,
-        lowerBound: lowerBoundPercentage.toFixed(2) + '%',
-        upperBound: upperBoundPercentage.toFixed(2) + '%'
-    });
     localStorage.setItem('entries', JSON.stringify(entries));
     displayEntries();
 }
 
-
-
-// On page load, set form defaults from local storage and display entries
-window.onload = function () {
-
-    if (document.getElementById('entriesTable')) {
-        displayEntries();
-    }
-};
+// Initial setup
+updateRangeHint();
+displayEntries();
