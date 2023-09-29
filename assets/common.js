@@ -35,104 +35,68 @@ class HeartRateScorerSettings {
 }
 
 class HeartRateScorer {
-    constructor(goalHeartRate, difficulty = 'medium', age = 30, gender = 'male', height = 170, weight = 70) {
-        this.age = age;
-        this.gender = gender;
-        this.height = height;
-        this.weight = weight;
-        this.difficulty = difficulty;
+    constructor(age, goalHeartRateStart, difficulty) {
+        this.age = age || 30;
+        this.difficulty = difficulty || 'medium';
         this.MHR = this.calculateMHR();
+        this.recommendedRange = this.getRecommendedHeartRateRange();
+        this.goalHeartRateStart = this.validateGoalHeartRateStart(goalHeartRateStart || 0);
         this.targetRange = this.calculateTargetRange();
-        this.goalHeartRate = goalHeartRate || this.targetRange.center;
-    }
-
-    getLowerBound(goal = this.goalHeartRate) {
-        switch (this.difficulty) {
-            case 'easy':
-                return goal * 0.50;
-            case 'medium':
-                return goal * 0.65;
-            case 'hard':
-                return goal * 0.85;
-            default:
-                throw new Error('Invalid difficulty level');
-        }
-    }
-
-    getUpperBound(goal = this.goalHeartRate) {
-        switch (this.difficulty) {
-            case 'easy':
-                return goal * 1.35;
-            case 'medium':
-                return goal * 1.15;
-            case 'hard':
-                return goal * 1.10;
-            default:
-                throw new Error('Invalid difficulty level');
-        }
-    }
-
-    getRecommendedHeartRateRange(age) {
-        const maxHeartRate = 220 - age;
-        const minZone2 = maxHeartRate * 0.60;  // Zone 2 starts from 60% of Max HR
-        const maxZone2 = maxHeartRate * 0.70;  // Zone 2 ends at 70% of Max HR
-        return [minZone2, maxZone2];
     }
 
     calculateMHR() {
         return 206.9 - (0.67 * this.age);
     }
 
-    calculateTargetRange() {
+    getRecommendedHeartRateRange() {
         const zone2Start = this.MHR * 0.60;
         const zone2End = this.MHR * 0.70;
+        return { start: zone2Start, end: zone2End };
+    }
 
-        let width;
-        switch (this.difficulty) {
-            case 'hard':
-                width = 10;  // Narrowest range
-                break;
-            case 'medium':
-                width = 15;
-                break;
-            case 'easy':
-            default:
-                width = 20;  // Widest range
-                break;
+    validateGoalHeartRateStart(start) {
+        const maxPossibleEnd = start + this.getDifficultyRangeWidth();
+        if (maxPossibleEnd > this.MHR) {
+            return this.MHR - this.getDifficultyRangeWidth();
         }
+        return start;
+    }
 
+    calculateTargetRange() {
+        const width = this.getDifficultyRangeWidth();
         return {
-            start: this.goalHeartRate,
-            end: this.goalHeartRate + width,
-            center: this.goalHeartRate + width / 2
+            start: this.goalHeartRateStart,
+            end: this.goalHeartRateStart + width
         };
     }
 
+
     baseScore(averageHeartRate) {
         const a = this.getMaximumScore();
-        const c = (this.targetRange.end - this.targetRange.center) / 3;
+        const c = (this.targetRange.end - this.targetRange.start) / 3;
 
-        if (averageHeartRate < 0.5 * this.MHR || averageHeartRate > this.MHR) {
-            return 0;
+        if (averageHeartRate < this.targetRange.start || averageHeartRate > this.targetRange.end) {
+            return a / 2 * Math.exp(-Math.pow(averageHeartRate - this.targetRange.start, 2) / (2 * Math.pow(c, 2)));
         }
 
-        return a * Math.exp(-Math.pow(averageHeartRate - this.targetRange.center, 2) / (2 * Math.pow(c, 2)));
-    }
-
-    getMaximumScore() {
-        switch (this.difficulty) {
-            case 'hard':
-                return 100;
-            case 'medium':
-                return 95;
-            case 'easy':
-            default:
-                return 90;
-        }
+        return a;
     }
 
     finalScore(averageHeartRate) {
         return Math.round(this.baseScore(averageHeartRate));
     }
+
+    getDifficultyRangeWidth() {
+        switch (this.difficulty) {
+            case 'hard':
+                return 10;  // Narrowest range
+            case 'medium':
+                return 15;
+            case 'easy':
+            default:
+                return 20;  // Widest range
+        }
+    }
+
 }
 

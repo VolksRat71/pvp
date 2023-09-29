@@ -1,5 +1,5 @@
- /* Dark Theme Styles */
- body {
+/* Dark Theme Styles */
+body {
     background-color: #02202B;
     color: #ffffff;
 }
@@ -9,6 +9,22 @@
     background-color: #082F39;
     color: #ffffff;
     border-color: #186374;
+}
+
+/* Active state for inputs */
+.form-control:active,
+.form-control:focus {
+    background-color: #186374;
+    color: #ffffff;
+    border-color: #B4483E;
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(180, 72, 62, 0.25);  /* Adds a reddish glow around the active input */
+}
+
+/* Disabled state for inputs */
+.form-control:disabled {
+    background-color: #032B3C;
+    color: #8BA8B0;
 }
 
 .btn-primary {

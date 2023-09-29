@@ -13,23 +13,64 @@ document.getElementById('scorerForm').addEventListener('submit', function (e) {
     e.preventDefault();
     calculateFinalScore();
 });
+document.getElementById('age').addEventListener('input', updateGoalHeartRateRangeEnd);
+document.getElementById('goalHeartRateStart').addEventListener('input', updateGoalHeartRateRangeEnd);
+document.getElementById('difficulty').addEventListener('input', updateGoalHeartRateRangeEnd);
+
+function updateGoalHeartRateRangeEnd() {
+    const age = parseFloat(document.getElementById('age').value);
+    const goalHeartRateStart = parseFloat(document.getElementById('goalHeartRateStart').value);
+    const difficulty = document.getElementById('difficulty').value;
+
+    // Check if the required fields have values
+    if (!isNaN(age) && !isNaN(goalHeartRateStart) && difficulty) {
+        const scorer = new HeartRateScorer(age, goalHeartRateStart, difficulty);
+        document.getElementById('goalHeartRateEnd').value = scorer.targetRange.end.toFixed(0);
+    } else {
+        document.getElementById('goalHeartRateEnd').value = '';
+    }
+}
 
 // Functions
 function updateRangeHint() {
     const difficulty = document.getElementById('difficulty').value;
     const age = parseFloat(document.getElementById('age').value) || 25;  // Default age if not provided
-    const scorer = new HeartRateScorer(0, difficulty, age);  // Dummy goal for this instance
+    const goalHeartRateStart = parseFloat(document.getElementById('goalHeartRateStart').value);
 
-    // Set placeholders for the goal range
-    const recommendedRange = scorer.getRecommendedHeartRateRange(age);
-    document.getElementById('goalHeartRateStart').placeholder = recommendedRange[0].toFixed(0);
-    document.getElementById('goalHeartRateEnd').placeholder = recommendedRange[1].toFixed(0);
 
-    // Display difficulty hint
+    const scorer = new HeartRateScorer(age, goalHeartRateStart, difficulty); // Using goalStart for this instance
+
+    // Set placeholders for the recommended heart rate range
+    const {start, end} = scorer.getRecommendedHeartRateRange(age);
+
+    document.getElementById('goalHeartRateStart').placeholder = start.toFixed(0);
+    document.getElementById('goalHeartRateEnd').placeholder = end.toFixed(0);
+
+    // Calculate and display the actual target range based on the difficulty and entered goal start
+    const targetRange = scorer.calculateTargetRange();
+
+    document.getElementById('rangeHint').textContent = `(${targetRange.start.toFixed(2)} to ${targetRange.end.toFixed(2)})`;
+
+    // Display the difficulty hint
     const lowerBoundPercentage = (1 - currentSettings[difficulty].lowerBound) * 100;
     const upperBoundPercentage = (currentSettings[difficulty].upperBound - 1) * 100;
-    const hint = `${lowerBoundPercentage.toFixed(2)}% under to ${upperBoundPercentage.toFixed(2)}% over`;
-    document.getElementById('difficultyHint').textContent = hint;
+    const difficultyHint = `${lowerBoundPercentage.toFixed(2)}% under to ${upperBoundPercentage.toFixed(2)}% over`;
+    document.getElementById('difficultyHint').textContent = difficultyHint;
+}
+
+function checkFormCompletion() {
+    const age = parseFloat(document.getElementById('age').value);
+    const goalHeartRateStart = parseFloat(document.getElementById('goalHeartRateStart').value);
+    const difficulty = document.getElementById('difficulty').value;
+
+    const calculateButton = document.getElementById('calculateButton');
+
+    // Check if all form fields are filled out
+    if (!isNaN(age) && !isNaN(goalHeartRateStart) && difficulty) {
+        calculateButton.disabled = false;
+    } else {
+        calculateButton.disabled = true;
+    }
 }
 
 
@@ -94,3 +135,4 @@ function deleteEntry(index) {
 // Initial setup
 updateRangeHint();
 displayEntries();
+checkFormCompletion()
