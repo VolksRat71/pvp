@@ -44,6 +44,33 @@ class HeartRateScorer {
         this.targetRange = this.calculateTargetRange();
     }
 
+    getDifficultySettings() {
+        const defaultSettings = {
+            easy: {
+                lowerBoundPercentage: 0.50,
+                upperBoundPercentage: 1.35,
+                width: 20,
+                maxScore: 90
+            },
+            medium: {
+                lowerBoundPercentage: 0.65,
+                upperBoundPercentage: 1.15,
+                width: 15,
+                maxScore: 95
+            },
+            hard: {
+                lowerBoundPercentage: 0.85,
+                upperBoundPercentage: 1.10,
+                width: 10,
+                maxScore: 100
+            }
+        };
+
+        // Check for overrides in local storage
+        const overrides = JSON.parse(localStorage.getItem(this.difficulty) || '{}');
+        return { ...defaultSettings[this.difficulty], ...overrides };
+    }
+
     calculateMHR() {
         return 206.9 - (0.67 * this.age);
     }
@@ -68,26 +95,44 @@ class HeartRateScorer {
 
     calculateTargetRange() {
         const width = this.getDifficultyRangeWidth();
+
         return {
-            start: this.goalHeartRateStart,
-            end: this.goalHeartRateStart + width
+            start: parseFloat(this.goalHeartRateStart),
+            end: parseFloat(this.goalHeartRateStart) + width
         };
     }
 
+    getMaximumScore() {
+        switch (this.difficulty) {
+            case 'hard':
+                return 100;
+            case 'medium':
+                return 95;
+            case 'easy':
+            default:
+                return 90;
+        }
+    }
 
     baseScore(averageHeartRate) {
         const a = this.getMaximumScore();
         const c = (this.targetRange.end - this.targetRange.start) / 3;
 
-        if (averageHeartRate < this.targetRange.start || averageHeartRate > this.targetRange.end) {
-            return a / 2 * Math.exp(-Math.pow(averageHeartRate - this.targetRange.start, 2) / (2 * Math.pow(c, 2)));
+        if (averageHeartRate < this.targetRange.start) {
+            // Curve from 0 to max score
+            return a * Math.exp(-Math.pow(averageHeartRate - this.targetRange.start, 2) / (2 * Math.pow(c, 2)));
+        } else if (averageHeartRate <= this.targetRange.end) {
+            // Within target range, full score
+            return a;
+        } else {
+            // Curve from max score to 0
+            return a - (a * Math.exp(-Math.pow(averageHeartRate - this.targetRange.end, 2) / (2 * Math.pow(c, 2))));
         }
-
-        return a;
     }
 
     finalScore(averageHeartRate) {
-        return Math.round(this.baseScore(averageHeartRate));
+        const score = this.baseScore(averageHeartRate);
+        return score < 0.5 ? 0 : Math.round(score);
     }
 
     getDifficultyRangeWidth() {

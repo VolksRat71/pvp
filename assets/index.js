@@ -144,14 +144,15 @@ function checkFormCompletion() {
 
 function calculateFinalScore() {
     const difficulty = document.getElementById('difficulty').value;
-    const age = parseFloat(document.getElementById('age').value) || 25;
+    const age = parseFloat(document.getElementById('age').value) || 25;  // Default age if not provided
+    const entries = JSON.parse(localStorage.getItem('entries') || '[]');
     const goalStart = parseFloat(document.getElementById('goalHeartRateStart').value);
+    const goalEnd = goalStart + new HeartRateScorer(age, goalStart, difficulty).getDifficultyRangeWidth();
     const average = parseFloat(document.getElementById('averageHeartRate').value);
+    const score = new HeartRateScorer(age, goalStart, difficulty).finalScore(average);
 
-    const scorer = new HeartRateScorer(goalStart, difficulty, age);
-    const score = scorer.finalScore(average)
+    storeFormData();
 
-    // Update and store the entries
     entries.push({
         date: new Date().toLocaleString(),
         goal: `${goalStart} - ${goalEnd}`,
@@ -161,6 +162,7 @@ function calculateFinalScore() {
     });
     localStorage.setItem('entries', JSON.stringify(entries));
 
+    // Update the displayed entries
     displayEntries();
 }
 
@@ -169,28 +171,41 @@ function displayEntries() {
     const table = document.getElementById('entriesTable');
     table.innerHTML = '';
     let totalScore = 0;
+
     entries.forEach((entry, index) => {
         totalScore += entry.score;
-
-        // Create an instance of HeartRateScorerSettings to get the bounds
-        const settings = new HeartRateScorerSettings(entry.difficulty);
-        const defaults = settings.getDefaults();
-        const scorer = new HeartRateScorer(entry.goal, entry.difficulty, );
-        const lowerBoundPercentage = (1 - scorer.lowerBound) * 100; // Convert to percentage under
-        const upperBoundPercentage = (scorer.upperBound - 1) * 100; // Convert to percentage over
 
         const row = table.insertRow();
         row.insertCell(0).innerHTML = entry.date;
         row.insertCell(1).innerHTML = entry.goal;
         row.insertCell(2).innerHTML = entry.average;
         row.insertCell(3).innerHTML = entry.score;
-        row.insertCell(4).innerHTML = entry.multiplier;
-        row.insertCell(5).innerHTML = entry.difficulty;
-        row.insertCell(6).innerHTML = lowerBoundPercentage.toFixed(2) + '%';  // Display as percentage
-        row.insertCell(7).innerHTML = upperBoundPercentage.toFixed(2) + '%';  // Display as percentage
-        row.insertCell(8).innerHTML = `<button onclick="deleteEntry(${index})">Delete</button>`;
+        row.insertCell(4).innerHTML = entry.difficulty;
+        row.insertCell(5).innerHTML = `<button onclick="deleteEntry(${index})">Delete</button>`;
     });
+
     document.getElementById('totalScore').innerText = totalScore;
+}
+
+function storeFormData() {
+    const formData = {
+        age: document.getElementById('age').value,
+        goalHeartRateStart: document.getElementById('goalHeartRateStart').value,
+        difficulty: document.getElementById('difficulty').value
+    };
+
+    localStorage.setItem('recentFormData', JSON.stringify(formData));
+}
+
+function prefillForm() {
+    const storedData = JSON.parse(localStorage.getItem('recentFormData'));
+
+    if (storedData) {
+        document.getElementById('age').value = storedData.age;
+        document.getElementById('goalHeartRateStart').value = storedData.goalHeartRateStart;
+        document.getElementById('difficulty').value = storedData.difficulty;
+        updateRangeHint();  // To reflect the changes in goal heart rate start and age
+    }
 }
 
 function deleteEntry(index) {
@@ -205,3 +220,4 @@ updateRangeHint();
 displayEntries();
 checkFormCompletion()
 initRangeHint()
+prefillForm();
