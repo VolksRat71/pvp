@@ -1,4 +1,5 @@
 // Constants and Global Variables
+let ageInputChanged = false;
 const entries = JSON.parse(localStorage.getItem('entries') || '[]');
 let currentSettings = {
     easy: { lowerBound: 0.5, upperBound: 1.35, maxScore: 90 },
@@ -16,6 +17,11 @@ document.getElementById('scorerForm').addEventListener('submit', function (e) {
 document.getElementById('age').addEventListener('input', updateGoalHeartRateRangeEnd);
 document.getElementById('goalHeartRateStart').addEventListener('input', updateGoalHeartRateRangeEnd);
 document.getElementById('difficulty').addEventListener('input', updateGoalHeartRateRangeEnd);
+document.getElementById('age').addEventListener('input', function() {
+    ageInputChanged = true;
+    debouncedValidation();
+});
+
 
 function updateGoalHeartRateRangeEnd() {
     const age = parseFloat(document.getElementById('age').value);
@@ -57,6 +63,50 @@ function updateRangeHint() {
     const difficultyHint = `${lowerBoundPercentage.toFixed(2)}% under to ${upperBoundPercentage.toFixed(2)}% over`;
     document.getElementById('difficultyHint').textContent = difficultyHint;
 }
+
+function validateGoalHeartRateStart() {
+    const age = parseFloat(document.getElementById('age').value) || 25;
+    const difficulty = document.getElementById('difficulty').value;
+    let goalHeartRateStart = parseFloat(document.getElementById('goalHeartRateStart').value) || 0;
+
+    const scorer = new HeartRateScorer(age, goalHeartRateStart, difficulty);
+
+    const minHint = document.getElementById('minHeartRateHint');
+    const maxHint = document.getElementById('maxHeartRateHint');
+
+    // Reset classes
+    minHint.classList.remove('text-danger');
+    maxHint.classList.remove('text-danger');
+    minHint.classList.add('text-muted');
+    maxHint.classList.add('text-muted');
+
+    // Set hints to default values
+    minHint.textContent = `Minimum safe heart rate: ${scorer.minimumSafeHeartRate().toFixed(0)}`;
+    maxHint.textContent = `Maximum heart rate: ${scorer.MHR.toFixed(0)}`;
+
+    if (goalHeartRateStart + scorer.getDifficultyRangeWidth() > scorer.MHR) {
+        maxHint.textContent = `Your input is too high! Maximum heart rate: ${scorer.MHR.toFixed(0)}`;
+        maxHint.classList.remove('text-muted');
+        maxHint.classList.add('text-danger');
+    } else if (goalHeartRateStart < scorer.minimumSafeHeartRate()) {
+        minHint.textContent = `Your input is too low! Minimum safe heart rate: ${scorer.minimumSafeHeartRate().toFixed(0)}`;
+        minHint.classList.remove('text-muted');
+        minHint.classList.add('text-danger');
+    }
+
+    document.getElementById('goalHeartRateEnd').value = (goalHeartRateStart + scorer.getDifficultyRangeWidth()).toFixed(0);
+}
+
+function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+}
+
+
+const debouncedValidation = debounce(validateGoalHeartRateStart, 1000);
 
 function checkFormCompletion() {
     const age = parseFloat(document.getElementById('age').value);

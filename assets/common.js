@@ -48,6 +48,10 @@ class HeartRateScorer {
         return 206.9 - (0.67 * this.age);
     }
 
+    minimumSafeHeartRate() {
+        return 0.50 * this.MHR;
+    }
+
     getRecommendedHeartRateRange() {
         const zone2Start = this.MHR * 0.60;
         const zone2End = this.MHR * 0.70;

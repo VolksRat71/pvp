@@ -21,11 +21,13 @@
                 </div>
                 <div class="mb-3">
                     <label for="goalStart" class="form-label">Goal Heart Rate Range Start</label>
-                    <input id="goalHeartRateStart" type="number" class="form-control" oninput="checkFormCompletion()">
+                    <input id="goalHeartRateStart" type="number" class="form-control" oninput="debouncedValidation(); checkFormCompletion()">
+                    <small id="minHeartRateHint" class="form-text text-alert"></small>
                 </div>
                 <div class="mb-3">
                     <label for="goalEnd" class="form-label">Goal Heart Rate Range End</label>
                     <input id="goalHeartRateEnd" type="number" class="form-control" oninput="checkFormCompletion()" disabled>
+                    <small id="maxHeartRateHint" class="form-text text-muted"></small>
                 </div>
                 <div class="mb-3">
                     <label for="average" class="form-label">Average Heart Rate</label>
