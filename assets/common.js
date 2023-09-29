@@ -40,6 +40,7 @@ class HeartRateScorer {
         this.difficulty = difficulty || 'medium';
         this.MHR = this.calculateMHR();
         this.recommendedRange = this.getRecommendedHeartRateRange();
+        this.settings = this.getDifficultySettings();
         this.goalHeartRateStart = this.validateGoalHeartRateStart(goalHeartRateStart || 0);
         this.targetRange = this.calculateTargetRange();
     }
@@ -68,7 +69,6 @@ class HeartRateScorer {
 
         // Check for overrides in local storage
         const overrides = JSON.parse(localStorage.getItem(this.difficulty) || '{}');
-
         return { ...defaultSettings[this.difficulty], ...overrides };
     }
 
@@ -87,37 +87,23 @@ class HeartRateScorer {
     }
 
     validateGoalHeartRateStart(start) {
-        const maxPossibleEnd = start + this.getDifficultyRangeWidth();
+        const maxPossibleEnd = start + this.settings.width;
         if (maxPossibleEnd > this.MHR) {
-            return this.MHR - this.getDifficultyRangeWidth();
+            return this.MHR - this.settings.width;
         }
         return start;
     }
 
     calculateTargetRange() {
-        const width = this.getDifficultyRangeWidth();
-
         return {
             start: parseFloat(this.goalHeartRateStart),
-            end: parseFloat(this.goalHeartRateStart) + width
+            end: parseFloat(this.goalHeartRateStart) + this.settings.width
         };
     }
 
-    getMaximumScore() {
-        switch (this.difficulty) {
-            case 'hard':
-                return 100;
-            case 'medium':
-                return 95;
-            case 'easy':
-            default:
-                return 90;
-        }
-    }
-
     baseScore(averageHeartRate) {
-        const a = this.getMaximumScore();
-        const c = (this.targetRange.end - this.targetRange.start) / 3;
+        const a = this.settings.maxScore;
+        const c = this.settings.width / 3;
 
         if (averageHeartRate < this.targetRange.start) {
             // Curve from 0 to max score
@@ -136,17 +122,4 @@ class HeartRateScorer {
         return score < 0.5 ? 0 : Math.round(score);
     }
 
-    getDifficultyRangeWidth() {
-        switch (this.difficulty) {
-            case 'hard':
-                return 10;  // Narrowest range
-            case 'medium':
-                return 15;
-            case 'easy':
-            default:
-                return 20;  // Widest range
-        }
-    }
-
 }
-

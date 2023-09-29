@@ -2,11 +2,6 @@
 let ageInputChanged = false;
 let rangeValidationResult = false;
 const entries = JSON.parse(localStorage.getItem('entries') || '[]');
-let currentSettings = {
-    easy: { lowerBound: 0.5, upperBound: 1.35, maxScore: 90 },
-    medium: { lowerBound: 0.65, upperBound: 1.15, maxScore: 95 },
-    hard: { lowerBound: 0.85, upperBound: 1.1, maxScore: 100 }
-};
 
 // Event Listeners
 document.getElementById('difficulty').addEventListener('change', updateRangeHint);
@@ -56,7 +51,7 @@ function updateRangeHint() {
     document.getElementById('goalHeartRateStart').placeholder = start.toFixed(0);
     document.getElementById('goalHeartRateEnd').placeholder = end.toFixed(0);
 
-    document.getElementById('rangeHint').textContent = `(Top Score Width: ${difficultySettings.width} | Max Score: ${difficultySettings.maxScore})`;
+    document.getElementById('rangeHint').textContent = `(Score Width: ${difficultySettings.width} | Max Score: ${difficultySettings.maxScore})`;
 
     // Display the difficulty hint
     const lowerBoundPercentage = (1 - difficultySettings.lowerBoundPercentage) * 100;
@@ -147,9 +142,10 @@ function calculateFinalScore() {
     const age = parseFloat(document.getElementById('age').value) || 25;  // Default age if not provided
     const entries = JSON.parse(localStorage.getItem('entries') || '[]');
     const goalStart = parseFloat(document.getElementById('goalHeartRateStart').value);
-    const goalEnd = goalStart + new HeartRateScorer(age, goalStart, difficulty).getDifficultyRangeWidth();
+    const scorer = new HeartRateScorer(age, goalStart, difficulty);
+    const goalEnd = goalStart + scorer.settings.width;
     const average = parseFloat(document.getElementById('averageHeartRate').value);
-    const score = new HeartRateScorer(age, goalStart, difficulty).finalScore(average);
+    const score = scorer.finalScore(average);
 
     storeFormData();
 
@@ -158,7 +154,11 @@ function calculateFinalScore() {
         goal: `${goalStart} - ${goalEnd}`,
         average: average,
         score: score,
-        difficulty: difficulty
+        difficulty: difficulty,
+        width: scorer.settings.width,
+        maxScore: scorer.settings.maxScore,
+        lowerBound: scorer.settings.lowerBoundPercentage,
+        upperBound: scorer.settings.upperBoundPercentage
     });
     localStorage.setItem('entries', JSON.stringify(entries));
 
@@ -181,11 +181,20 @@ function displayEntries() {
         row.insertCell(2).innerHTML = entry.average;
         row.insertCell(3).innerHTML = entry.score;
         row.insertCell(4).innerHTML = entry.difficulty;
-        row.insertCell(5).innerHTML = `<button onclick="deleteEntry(${index})">Delete</button>`;
+
+        // Display the width, max score, lower bound and upper bound in desired format
+        row.insertCell(5).innerHTML = entry.width;
+        row.insertCell(6).innerHTML = entry.maxScore;
+        row.insertCell(7).innerHTML = ((1 - entry.lowerBound) * 100).toFixed(2) + '%';
+        row.insertCell(8).innerHTML = ((entry.upperBound - 1) * 100).toFixed(2) + '%';
+
+        row.insertCell(9).innerHTML = `<button class="btn btn-secondary" onclick="deleteEntry(${index})">Delete</button>`;
     });
 
     document.getElementById('totalScore').innerText = totalScore;
 }
+
+
 
 function storeFormData() {
     const formData = {
