@@ -1,0 +1,27 @@
+ /* Dark Theme Styles */
+ body {
+    background-color: #02202B;
+    color: #ffffff;
+}
+
+.form-control,
+.btn {
+    background-color: #082F39;
+    color: #ffffff;
+    border-color: #186374;
+}
+
+.btn-primary {
+    background-color: #186374;
+    border-color: #186374;
+}
+
+.btn-primary:hover {
+    background-color: #B4483E;
+    border-color: #B4483E;
+}
+
+.card {
+    background-color: #082F39;
+    border-color: #186374;
+}
