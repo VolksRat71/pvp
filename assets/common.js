@@ -1,39 +1,3 @@
-class HeartRateScorerSettings {
-    constructor(difficulty = 'medium') {
-        this.difficulty = difficulty;
-    }
-
-    getDefaults() {
-        let lowerBound, upperBound, multiplier;
-
-        switch (this.difficulty) {
-            case 'easy':
-                lowerBound = 0.70;
-                upperBound = 1.10;
-                multiplier = 1;
-                break;
-            case 'medium':
-                lowerBound = 0.80;
-                upperBound = 1.05;
-                multiplier = 1.025;
-                break;
-            case 'hard':
-                lowerBound = 0.90;
-                upperBound = 1.025;
-                multiplier = 1.05;
-                break;
-            default:
-                throw new Error('Invalid difficulty level');
-        }
-
-        return {
-            lowerBound: lowerBound,
-            upperBound: upperBound,
-            multiplier: multiplier
-        };
-    }
-}
-
 class HeartRateScorer {
     constructor(age, goalHeartRateStart, difficulty) {
         this.age = age || 30;
@@ -72,6 +36,38 @@ class HeartRateScorer {
         return { ...defaultSettings[this.difficulty], ...overrides };
     }
 
+    getAllDifficultySettings() {
+        const defaultSettings = {
+            easy: {
+                lowerBoundPercentage: 0.50,
+                upperBoundPercentage: 1.35,
+                width: 20,
+                maxScore: 90
+            },
+            medium: {
+                lowerBoundPercentage: 0.65,
+                upperBoundPercentage: 1.15,
+                width: 15,
+                maxScore: 95
+            },
+            hard: {
+                lowerBoundPercentage: 0.85,
+                upperBoundPercentage: 1.10,
+                width: 10,
+                maxScore: 100
+            }
+        };
+
+        // Merge with overrides from local storage for each difficulty
+        for (let difficulty in defaultSettings) {
+            const overrides = JSON.parse(localStorage.getItem(difficulty) || '{}');
+            defaultSettings[difficulty] = { ...defaultSettings[difficulty], ...overrides };
+        }
+
+        return defaultSettings;
+    }
+
+
     calculateMHR() {
         return 206.9 - (0.67 * this.age);
     }
@@ -101,19 +97,82 @@ class HeartRateScorer {
         };
     }
 
-    baseScore(averageHeartRate) {
-        const a = this.settings.maxScore;
-        const c = this.settings.width / 3;
+    generateCurveData() {
+        // Retrieve all difficulty settings
+        const allSettings = this.getAllDifficultySettings();
 
-        if (averageHeartRate < this.targetRange.start) {
-            // Curve from 0 to max score
-            return a * Math.exp(-Math.pow(averageHeartRate - this.targetRange.start, 2) / (2 * Math.pow(c, 2)));
-        } else if (averageHeartRate <= this.targetRange.end) {
-            // Within target range, full score
-            return a;
-        } else {
-            // Curve from max score to 0
-            return a - (a * Math.exp(-Math.pow(averageHeartRate - this.targetRange.end, 2) / (2 * Math.pow(c, 2))));
+        // Calculate the lower and upper bounds for each difficulty
+        let minLowerBound = Infinity;
+        let maxUpperBound = -Infinity;
+
+        for (let difficulty in allSettings) {
+            const currentLowerBound = this.goalHeartRateStart * allSettings[difficulty].lowerBoundPercentage;
+            const currentUpperBound = (this.goalHeartRateStart + allSettings[difficulty].width) * allSettings[difficulty].upperBoundPercentage;
+
+            if (currentLowerBound < minLowerBound) {
+                minLowerBound = currentLowerBound;
+            }
+
+            if (currentUpperBound > maxUpperBound) {
+                maxUpperBound = currentUpperBound;
+            }
+        }
+
+        const step = 1; // Define the step size for the x-axis values
+
+        let x = [];
+        let y = [];
+
+        // Ensure key points are included in the x-axis values
+        const keyPoints = [minLowerBound, this.targetRange.start, this.targetRange.end, maxUpperBound];
+
+        for (let heartRate = minLowerBound; heartRate <= maxUpperBound; heartRate += step) {
+            x.push(heartRate);
+            y.push(this.baseScore(heartRate));
+        }
+
+        // Ensure all key points are present in the x-axis values
+        for (let point of keyPoints) {
+            if (!x.includes(point)) {
+                x.push(point);
+                y.push(this.baseScore(point));
+            }
+        }
+
+        // Sort x and y arrays based on x values
+        const combined = x.map((value, index) => ({ x: value, y: y[index] }));
+        combined.sort((a, b) => a.x - b.x);
+
+        return {
+            x: combined.map(item => item.x),
+            y: combined.map(item => item.y)
+        };
+    }
+
+    baseScore(averageHeartRate) {
+        const lowerBound = this.goalHeartRateStart * this.settings.lowerBoundPercentage;
+        const upperBound = (this.goalHeartRateStart + this.settings.width) * this.settings.upperBoundPercentage;
+
+        // If averageHeartRate is below the lower bound or above the upper bound, return 0
+        if (averageHeartRate < lowerBound || averageHeartRate > upperBound) {
+            return 0;
+        }
+
+        // If averageHeartRate is within the target range, return max score
+        if (averageHeartRate >= this.goalHeartRateStart && averageHeartRate <= this.goalHeartRateStart + this.settings.width) {
+            return this.settings.maxScore;
+        }
+
+        // If averageHeartRate is between the lower bound and the start of the target range
+        if (averageHeartRate < this.goalHeartRateStart) {
+            const slope = this.settings.maxScore / (this.goalHeartRateStart - lowerBound);
+            return slope * (averageHeartRate - lowerBound);
+        }
+
+        // If averageHeartRate is between the end of the target range and the upper bound
+        if (averageHeartRate > this.goalHeartRateStart + this.settings.width) {
+            const slope = -this.settings.maxScore / (upperBound - (this.goalHeartRateStart + this.settings.width));
+            return slope * (averageHeartRate - (this.goalHeartRateStart + this.settings.width)) + this.settings.maxScore;
         }
     }
 
