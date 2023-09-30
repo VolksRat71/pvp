@@ -119,7 +119,6 @@ function debounce(func, wait) {
     };
 }
 
-
 const debouncedValidation = debounce(validateGoalHeartRateStart, 1500);
 
 function checkFormCompletion() {
@@ -135,7 +134,6 @@ function checkFormCompletion() {
         calculateButton.disabled = true && !rangeValidationResult;
     }
 }
-
 
 function calculateFinalScore() {
     const difficulty = document.getElementById('difficulty').value;
@@ -193,8 +191,6 @@ function displayEntries() {
 
     document.getElementById('totalScore').innerText = totalScore;
 }
-
-
 
 function storeFormData() {
     const formData = {

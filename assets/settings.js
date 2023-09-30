@@ -1,3 +1,5 @@
+let myChart;
+
 function saveSettings() {
     const difficulty = document.getElementById('difficulty').value;
     const overrides = {
@@ -59,8 +61,11 @@ async function loadExampleChart() {
                         ...new HeartRateScorer(30, 80, 'hard').generateCurveData().x];
     const uniqueXValues = [...new Set(allXValues)].sort((a, b) => a - b);
 
+
+    if(myChart) myChart.destroy();
+
     var ctx = document.getElementById('myChart').getContext('2d');
-    new Chart(ctx, {
+    myChart = new Chart(ctx, {
         type: 'line',
         data: {
             labels: uniqueXValues,
@@ -117,10 +122,22 @@ async function loadExampleChart() {
     });
 }
 
+// Add event listeners to each input field
+const inputFields = ['lowerBoundPercentage', 'upperBoundPercentage', 'width', 'maxScore'];
+for (let field of inputFields) {
+    document.getElementById(field).addEventListener('input', () => {
+        saveSettings();
+        loadExampleChart();
+    });
+}
 
-document.getElementById('difficulty').addEventListener('change', loadSettings);
+document.getElementById('difficulty').addEventListener('change', () => {
+    loadSettings();
+    loadExampleChart();
+});
+
 window.onload = () => {
-    loadSettings()
+    loadSettings();
     loadExampleChart();
 };
 
